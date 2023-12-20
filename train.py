@@ -5,7 +5,7 @@ from config import getConfig
 from customlog import CustomLogger
 from data import JSONLEventData
 from torch.utils.data import DataLoader
-
+import wandb
 from model import ImprovisedSasrec
 from utils import saveModel, tryRestoreStateDict
 def main():
@@ -58,11 +58,13 @@ def main():
     bce_criterion = torch.nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"], betas=(0.9, 0.98))
     logger=CustomLogger(os.path.join(config["train_dir"],"log.txt"))
+    wandb.watch(model, log_freq=100)
     for epoch in range(epoch_start_idx, config["num_epochs"] + 1):
         logger.log("",f"Epoch {epoch}",True)
         for step in range(config["num_batch"]):
             batch=next(iter(trainloader))
-            model.train_step(batch,step,logger,optimizer,bce_criterion)
+            loss=model.train_step(batch,step,logger,optimizer,bce_criterion)
+            wandb.log({"loss": loss})
         model.validate_step(next(iter(testloader)),epoch,logger,bce_criterion)
         saveModel(model,epoch,config["train_dir"])
 if __name__=="__main__":

@@ -22,7 +22,7 @@ Mini-batch sampling is a form of popularity-based sampling, since the training i
 
 ## Top-K negative sampling
 
-Top-K sampling is a method mentioned in []. The idea is to use a combination of uniform sampling and mini-batch sampling to train the model. The model subsequently focuses on updating the top-k negatives instead of updating the whole set of negative ratings.
+Top-K sampling is a method mentioned in []. The idea is to use a combination of uniform sampling and mini-batch sampling to train the model. The model subsequently focuses on updating the top-k negatives instead of updating the whole set of negative ratings.z
 # Model
 
 ## SASrec

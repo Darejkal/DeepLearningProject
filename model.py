@@ -105,6 +105,7 @@ class ImprovisedSasrec(torch.nn.Module):
         logger.log("TRAIN",f"i: {iteration}, train_loss: {loss}", )
         loss.backward()
         optimizer.step()
+        return loss
 
     def validate_step(self, batch, iteration,logger):
         prediction_head = self.forward(batch["positives"], batch["mask"])
