@@ -67,7 +67,7 @@ def main():
         logger.log("",f"Epoch {epoch}",True)
         for step in range(config["num_batch"]):
             batch=next(iter(trainloader))
-            loss=model.train_step(batch,step,logger,optimizer)
+            loss=model.train_step(batch,step,optimizer,logger)
             wandb.log({"loss": loss})
         model.validate_step(next(iter(testloader)),epoch,logger)
         saveModel(model,epoch,config["train_dir"])
