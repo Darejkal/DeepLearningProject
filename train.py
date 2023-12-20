@@ -10,7 +10,8 @@ from model import ImprovisedSasrec
 from utils import saveModel, tryRestoreStateDict
 def main():
     config=getConfig()
-    wandb.init(project="sasrec",dir=os.path.join(config["train_dir"],"wandb"))
+    os.makedirs(config["train_dir"])
+    wandb.init(project="sasrec",dir=config["train_dir"])
     model=ImprovisedSasrec(trainset.num_items, config["max_len"],config["hidden_size"],config["dropout_rate"],config["num_heads"],config["sampling_style"],device=config["device"])
     model.to(model.device)
     wandb.watch(model, log_freq=100)
