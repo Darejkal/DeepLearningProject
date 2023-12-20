@@ -134,7 +134,7 @@ def tryRestoreStateDict(model:torch.nn.Module,device:str,train_dir:str,state_dic
     else:
         print('no state_dict_path provided')
     return model,epoch_start_idx
-def jsonl_sample_func(result_queue,dataset:JSONLEventData,batch_size):
+def jsonl_sample_func(result_queue,dataset,batch_size):
     def _sample():
         item=dataset[0]
         max_seqlen=dataset.max_seqlen
