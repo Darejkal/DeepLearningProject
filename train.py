@@ -61,16 +61,15 @@ def main():
     #     score = model.evaluate()
     #     logger.log("INFERENCE",score,True)
     #     exit()
-    bce_criterion = torch.nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"], betas=(0.9, 0.98))
     logger=CustomLogger(os.path.join(config["train_dir"],"log.txt"))
     for epoch in range(epoch_start_idx, config["num_epochs"] + 1):
         logger.log("",f"Epoch {epoch}",True)
         for step in range(config["num_batch"]):
             batch=next(iter(trainloader))
-            loss=model.train_step(batch,step,logger,optimizer,bce_criterion)
+            loss=model.train_step(batch,step,logger,optimizer)
             wandb.log({"loss": loss})
-        model.validate_step(next(iter(testloader)),epoch,logger,bce_criterion)
+        model.validate_step(next(iter(testloader)),epoch,logger)
         saveModel(model,epoch,config["train_dir"])
 if __name__=="__main__":
     torch.multiprocessing.set_start_method('spawn')
