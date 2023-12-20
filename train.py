@@ -24,7 +24,7 @@ def main():
     trainloader=DataLoader(trainset,
                                 drop_last=True,
                                 batch_size=config["batch_size"],
-                                shuffle=config["shuffle"],
+                                shuffle=True if config["shuffle"]!=None else False,
                                 pin_memory=True,
                                 persistent_workers=True,
                                 num_workers=os.cpu_count() or 2,

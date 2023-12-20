@@ -28,7 +28,7 @@ def _infer_shape(session_len, num_uniform_negatives, sampling_style):
     elif sampling_style=="sessionwise":
         return [num_uniform_negatives]
     else:
-        raise NotImplementedError
+        return []
 def sample_uniform_negatives_with_shape(pos, num_items, session_len, num_uniform_negatives, sampling_style, reject_session_items):
     """
         Only used for eventwise and sessionwise cases.

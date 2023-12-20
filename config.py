@@ -16,7 +16,7 @@ def getConfig():
         "dropout_rate":0.5,
         "device":"cpu",
         "inference_only":False,
-        "shuffle":True,
+        "shuffle":"sessionwise",
         "state_dict_path":None,
         "stats_file":"/kaggle/input/otto-preprocessed-jsonl/stats.json",
         "num_batch":2000,
