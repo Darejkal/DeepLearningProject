@@ -10,7 +10,6 @@ from model import ImprovisedSasrec
 from utils import saveModel, tryRestoreStateDict
 def main():
     config=getConfig()
-    _,epoch_start_idx=tryRestoreStateDict(model,config["device"],config["train_dir"],config["state_dict_path"])
     logger=CustomLogger(log_file=os.path.join(config["train_dir"], 'log.txt'))
     trainset=JSONLEventData(path=config["dataset"],
                             stats_file=config["stats_file"],
@@ -55,6 +54,7 @@ def main():
     wandb.init(project="sasrec",dir=config["train_dir"])
     model=ImprovisedSasrec(trainset.num_items, config["max_len"],config["hidden_size"],config["dropout_rate"],config["num_heads"],config["sampling_style"],device=config["device"])
     model.to(model.device)
+    _,epoch_start_idx=tryRestoreStateDict(model,config["device"],config["train_dir"],config["state_dict_path"])
     wandb.watch(model, log_freq=100)
     # if config["inference_only"]:
     #     model.eval()
