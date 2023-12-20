@@ -1,6 +1,6 @@
 import torch
 
-from utils import calculate_ranks, pointwise_mrr, pointwise_recall
+from utils import calculate_ranks, mean_metric, pointwise_mrr, pointwise_recall
 
 
 class DynamicPositionEmbedding(torch.nn.Module):
@@ -138,13 +138,10 @@ class ImprovisedSasrec(torch.nn.Module):
         pw_rec = torch.stack(recalls, dim=2)
         pw_mrr = torch.stack(mrrs, dim=2)
         recall,mrr= mean_metric(pw_rec, batch["mask"]), mean_metric(pw_mrr, batch["mask"])
-        recall_sum=0
-        mrr_sum=0
         count=0
         for i, k in enumerate(cut_offs.tolist()):
-            recall_sum+=recall[i]
-            mrr_sum+=mrr[i]
             logger.log(f"EVALUATE_{iteration}",f'recall_cutoff_{k}= {recall[i]}',True )
             logger.log(f"EVALUATE_{iteration}",f'mrr_cutoff_{k}={mrr[i]}',True)
             count+=1
         logger.log(f"EVALUATE_LOSS_{iteration}",f"loss={loss}")
+        return torch.sum(recall)/count,torch.sum(mrr)/count,loss
