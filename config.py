@@ -51,3 +51,4 @@ def getConfig():
             "sampling_style": "sessionwise",
         }
     assert 0 <= config["num_batch_negatives"] < config['batch_size']
+    return config
