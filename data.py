@@ -31,7 +31,7 @@ class JSONLEventData(Dataset):
             assert datarange[0]>=0
             assert datarange[1]<=self.num_sessions
             self.range=datarange
-        self.line_offsets = self.get_offsets(self.path)
+        self.line_offsets = self.get_offsets(self.path,os.path.join(path,sub_category+"_offset"))
         assert len(self.line_offsets) == self.num_sessions
         assert sampling_style in {"eventwise", "sessionwise", "batchwise"}
         self.max_seqlen=max_seqlen
@@ -46,7 +46,9 @@ class JSONLEventData(Dataset):
             # reduce ram cost
             del stats["aid_map"]
         return stats
-    def get_offsets(self,jsonl_path:str):
+    def get_offsets(self,jsonl_path:str,offset_file:str|None=None):
+            if offset_file and os.path.isfile(offset_file):
+                return json.loads(next(open(offset_file,"r")))
             line_offsets = []
             with open(jsonl_path, "rt") as f:
                 offset = 0
@@ -55,6 +57,11 @@ class JSONLEventData(Dataset):
                     line_offsets.append((line_len, line_idx, offset))
                     offset += line_len
             line_offsets = [offset for _, _, offset in line_offsets]
+            try:
+                with open(offset_file,"") as f:
+                    f.write(json.dumps(line_offsets))
+            except:
+                pass
             return line_offsets
 
     def __read_session__(self,line:str):
