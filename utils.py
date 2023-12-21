@@ -124,25 +124,30 @@ def saveModel(model:torch.nn.Module,optimizer,train_dir:str,epoch,loss):
     )
     wandb.save(train_dir)
     print(f"Epoch {epoch} saved----------------")
-def tryRestoreStateDict(model:torch.nn.Module,optimizer,train_dir:str,state_dict_path:str):
+def tryRestoreStateDict(model:torch.nn.Module,optimizer:torch.optim.Optimizer,train_dir:str,state_dict_path:str):
     epoch = 1
     loss=1
     print("train_dir",train_dir)
     if train_dir is not None:
         try:
             checkpoint = torch.load(wandb.restore(train_dir))
+            print(1)
             model.load_state_dict(checkpoint["model_state_dict"])
+            print(2)
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            print(3)
             epoch = checkpoint["epoch"]
+            print(4)
             loss = checkpoint["loss"]
         except: 
             print('failed loading train_dir, pls check file path: ', end="")
             print(train_dir)
-        finally:
-            # return model,optimizer,epoch,loss
-            pass
+            raise NotImplementedError
+        # finally:
+        #     # return model,optimizer,epoch,loss
+        #     pass
     else:
-        print('no state_dict_path provided')
+        print('no train_dir provided')
     return model,optimizer,epoch,loss
 def jsonl_sample_func(result_queue,dataset,batch_size):
     def _sample():
