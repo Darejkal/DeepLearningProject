@@ -122,6 +122,7 @@ def saveModel(model:torch.nn.Module,optimizer,train_dir:str,epoch,loss):
     print(f"Epoch {epoch} saved----------------")
 def tryRestoreStateDict(model:torch.nn.Module,optimizer,train_dir:str,state_dict_path:str):
     epoch = 1
+    loss=1
     print("state_dict_path",state_dict_path)
     if state_dict_path is not None:
         try:
@@ -134,7 +135,8 @@ def tryRestoreStateDict(model:torch.nn.Module,optimizer,train_dir:str,state_dict
             print('failed loading state_dicts, pls check file path: ', end="")
             print(state_dict_path)
         finally:
-            return model,optimizer,epoch,0
+            # return model,optimizer,epoch,loss
+            pass
     else:
         print('no state_dict_path provided')
     return model,optimizer,epoch,loss
