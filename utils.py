@@ -122,7 +122,7 @@ def saveModel(model:torch.nn.Module,optimizer,train_dir:str,epoch,loss):
         },
         os.path.join(train_dir,"last.pth")
     )
-    wandb.save(train_dir)
+    wandb.save(os.path.join(train_dir,"last.pth"))
     print(f"Epoch {epoch} saved----------------")
 def tryRestoreStateDict(model:torch.nn.Module,optimizer:torch.optim.Optimizer,train_dir:str,state_dict_path:str):
     epoch = 1
@@ -130,7 +130,8 @@ def tryRestoreStateDict(model:torch.nn.Module,optimizer:torch.optim.Optimizer,tr
     print("train_dir",train_dir)
     if train_dir is not None:
         try:
-            checkpoint = torch.load(wandb.restore(train_dir))
+            wandb.restore(train_dir)
+            checkpoint = torch.load(os.path.join(train_dir,"last.pth"))
             print(1)
             model.load_state_dict(checkpoint["model_state_dict"])
             print(2)
