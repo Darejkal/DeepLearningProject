@@ -19,7 +19,7 @@ def getConfig():
         "shuffle":"sessionwise",
         "state_dict_path":"/kaggle/working/latest.pth",
         "stats_file":"/kaggle/input/otto-preprocessed-jsonl/stats.json",
-        "num_batch":1,
+        "num_batch":2000,
         "num_batch_negatives": 127,
         "num_uniform_negatives": 16384,
         "reject_uniform_session_items": False,
