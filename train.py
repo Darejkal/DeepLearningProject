@@ -51,7 +51,7 @@ def main():
         os.makedirs(os.path.join(config["train_dir"],"wandb"))
     except:
         pass
-    wandb.init(project="sasrec",dir=config["train_dir"])
+    wandb.init(project="sasrec",resume=True,dir=config["train_dir"])
     model=ImprovisedSasrec(trainset.num_items, config["max_len"],config["hidden_size"],config["dropout_rate"],config["num_heads"],config["sampling_style"],device=config["device"])
     model.to(model.device)
     _,epoch_start_idx=tryRestoreStateDict(model,config["device"],config["train_dir"],config["state_dict_path"])
