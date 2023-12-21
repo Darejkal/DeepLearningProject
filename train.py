@@ -46,7 +46,7 @@ def main():
                                 pin_memory=True,
                                 persistent_workers=True,
                                 num_workers=os.cpu_count() or 2,
-                                collate_fn=trainset.dynamic_collate)
+                                collate_fn=testset.dynamic_collate)
     try:
         os.makedirs(os.path.join(config["train_dir"],"wandb"))
     except:
@@ -54,15 +54,12 @@ def main():
     wandb.init(project="sasrec",resume=True,dir=config["train_dir"])
     model=ImprovisedSasrec(trainset.num_items, config["max_len"],config["hidden_size"],config["dropout_rate"],config["num_heads"],config["sampling_style"],device=config["device"])
     model.to(model.device)
-    _,epoch_start_idx=tryRestoreStateDict(model,config["device"],config["train_dir"],config["state_dict_path"])
-    wandb.watch(model, log_freq=100)
-    # if config["inference_only"]:
-    #     model.eval()
-    #     score = model.evaluate()
-    #     logger.log("INFERENCE",score,True)
-    #     exit()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"], betas=(0.9, 0.98))
-    logger=CustomLogger(os.path.join(config["train_dir"],"log.txt"))
+    if wandb.run.resumed:
+        _,_,epoch_start_idx,_=tryRestoreStateDict(model,optimizer,config["train_dir"],config["state_dict_path"])
+    else:
+        logger.log("","wandb not resumed")
+    wandb.watch(model, log_freq=100)
     for epoch in range(epoch_start_idx, config["num_epochs"] + 1):
         logger.log("",f"Epoch {epoch}",True)
         for step in range(config["num_batch"]):
@@ -70,7 +67,7 @@ def main():
             loss=model.train_step(batch,step,optimizer,logger)
             wandb.log({"loss": loss})
         model.validate_step(next(iter(testloader)),epoch,logger)
-        saveModel(model,epoch,config["train_dir"])
+        saveModel(model=model,optimizer=optimizer,epoch=epoch,train_dir=config["train_dir"],loss=loss)
 if __name__=="__main__":
     torch.multiprocessing.set_start_method('spawn')
     main()

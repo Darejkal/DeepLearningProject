@@ -28,10 +28,10 @@ def main():
                                 pin_memory=True,
                                 persistent_workers=True,
                                 num_workers=os.cpu_count() or 2,
-                                collate_fn=trainset.dynamic_collate)
-    model=ImprovisedSasrec(trainset.num_items, config["max_len"],config["hidden_size"],config["dropout_rate"],config["num_heads"],config["sampling_style"],device=config["device"])
+                                collate_fn=testset.dynamic_collate)
+    model=ImprovisedSasrec(testset.num_items, config["max_len"],config["hidden_size"],config["dropout_rate"],config["num_heads"],config["sampling_style"],device=config["device"])
     model.to(model.device)
-    _,epoch_start_idx=tryRestoreStateDict(model,config["device"],config["train_dir"],config["state_dict_path"])
+    _,_,epoch_start_idx,_=tryRestoreStateDict(model,config["device"],config["train_dir"],config["state_dict_path"])
     bce_criterion = torch.nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"], betas=(0.9, 0.98))
     logger=CustomLogger(os.path.join(config["train_dir"],"log.txt"))

@@ -4,7 +4,7 @@ import os
 import random
 import numpy as np
 from typing import List
-
+import wandb
 import torch
 def _uniform_negatives(num_items, shape):
     return np.random.randint(1, num_items+1, shape)
@@ -108,32 +108,36 @@ def getNumBatch(dataset_len:int,batch_size:int,max_iter:int=-1):
     else:
         num_batch=max_iter
     return num_batch
-def saveModel(model:torch.nn.Module,epoch,train_dir:str):
-    with open(os.path.join(train_dir, 'save.json'), 'w') as f:
-        f.write(json.dumps({"epoch":epoch}))
-    torch.save(model.state_dict(), os.path.join(train_dir, "latest.pth"))
+def saveModel(model:torch.nn.Module,optimizer,train_dir:str,epoch,loss):
+    torch.save(
+        {
+            "epoch": epoch,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "loss": loss,
+        },
+        train_dir
+    )
+    wandb.save(train_dir)
     print(f"Epoch {epoch} saved----------------")
-def tryRestoreStateDict(model:torch.nn.Module,device:str,train_dir:str,state_dict_path:str):
-    model.to(device)
-    model.train()
-    epoch_start_idx = 1
+def tryRestoreStateDict(model:torch.nn.Module,optimizer,train_dir:str,state_dict_path:str):
+    epoch = 1
     print("state_dict_path",state_dict_path)
     if state_dict_path is not None:
         try:
-            model.load_state_dict(torch.load(state_dict_path, map_location=torch.device(device)))
-            epoch=1
-            with open(os.path.join(train_dir, 'save.json'),"r") as f:
-                epoch=int(json.loads(next(f))["epoch"])
-            epoch_start_idx= epoch
+            checkpoint = torch.load(wandb.restore(train_dir))
+            model.load_state_dict(checkpoint["model_state_dict"])
+            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            epoch = checkpoint["epoch"]
+            loss = checkpoint["loss"]
         except: 
             print('failed loading state_dicts, pls check file path: ', end="")
             print(state_dict_path)
         finally:
-            # in case of jupyter notebook => will train model as new.
-            return model,epoch_start_idx
+            return model,optimizer,epoch,0
     else:
         print('no state_dict_path provided')
-    return model,epoch_start_idx
+    return model,optimizer,epoch,loss
 def jsonl_sample_func(result_queue,dataset,batch_size):
     def _sample():
         item=dataset[0]
