@@ -58,6 +58,7 @@ def main():
     if wandb.run.resumed:
         _,_,epoch_start_idx,_=tryRestoreStateDict(model,optimizer,config["train_dir"],config["state_dict_path"])
     else:
+        epoch_start_idx=1
         logger.log("","wandb not resumed")
     wandb.watch(model, log_freq=100)
     for epoch in range(epoch_start_idx, config["num_epochs"] + 1):
