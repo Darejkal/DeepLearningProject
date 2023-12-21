@@ -79,12 +79,16 @@ def evaluate_MRR(groundtruth:List[Tuple[int]], predicted:List[List[Tuple[int]]],
         if groundtruth[i] in predicted[i][:k]:
             return 1/i
     return 0
-def calculate_ranks(logits, labels, cutoffs):
+def  calculate_ranks(logits, labels, cutoffs):
     num_logits = logits.shape[-1]
     k = min(num_logits, torch.max(cutoffs).item())
-    indices,_  = torch.topk(logits, k=int(k), dim=-1)
+    # Indices represent k item IDs with the highest possibilty in DESC
+    _,indices  = torch.topk(logits, k=int(k), dim=-1)
+    # Indices represent k item IDs with the highest possibilty in ASC
     indices = torch.flip(indices, dims=[-1])
+    # There could be only 1 hit since all item IDs are all uniques
     hits = indices == labels.unsqueeze(dim=-1)
+    # Cum sum with sum returns the rank NO. with first one is 0
     ranks = torch.sum(torch.cumsum(hits, -1), -1) - 1.
     ranks[ranks == -1] = float('inf')
     return ranks
@@ -123,17 +127,17 @@ def saveModel(model:torch.nn.Module,optimizer,train_dir:str,epoch,loss):
 def tryRestoreStateDict(model:torch.nn.Module,optimizer,train_dir:str,state_dict_path:str):
     epoch = 1
     loss=1
-    print("state_dict_path",state_dict_path)
-    if state_dict_path is not None:
+    print("train_dir",train_dir)
+    if train_dir is not None:
         try:
-            checkpoint = torch.load(wandb.restore(state_dict_path))
+            checkpoint = torch.load(wandb.restore(train_dir))
             model.load_state_dict(checkpoint["model_state_dict"])
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
             epoch = checkpoint["epoch"]
             loss = checkpoint["loss"]
         except: 
-            print('failed loading state_dicts, pls check file path: ', end="")
-            print(state_dict_path)
+            print('failed loading train_dir, pls check file path: ', end="")
+            print(train_dir)
         finally:
             # return model,optimizer,epoch,loss
             pass

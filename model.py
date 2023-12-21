@@ -75,7 +75,6 @@ class ImprovisedSasrec(torch.nn.Module):
         return torch.logical_and(diag_masks, merged_masks)
     def forward(self, positives, mask): # for training   
         """
-        item_indices: positives
         mask: padding mask of 0 and 1
         returns attention_head
         """ 
@@ -85,8 +84,8 @@ class ImprovisedSasrec(torch.nn.Module):
         prediction_head = self.encoder(self.input_dropout(x), att_mask)
         return prediction_head
     def train_step(self, batch, iteration,optimizer,logger):
-        prediction_head = self.forward(batch["positives"],batch["mask"])
         optimizer.zero_grad()
+        prediction_head = self.forward(batch["positives"],batch["mask"])
         pos = multiply_head_with_embedding(prediction_head.unsqueeze(-2),
                                                    self.output_emb(batch["labels"]).unsqueeze(-2)).squeeze(-1)
 
