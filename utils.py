@@ -130,7 +130,8 @@ def tryRestoreStateDict(model:torch.nn.Module,optimizer:torch.optim.Optimizer,tr
     print("train_dir",train_dir)
     if train_dir is not None:
         try:
-            checkpoint = torch.load(wandb.restore(os.path.join(train_dir,"last.pth")))
+            # wandb.restore()
+            checkpoint = torch.load(os.path.join(train_dir,"last.pth"))
             print(1)
             model.load_state_dict(checkpoint["model_state_dict"])
             print(2)
