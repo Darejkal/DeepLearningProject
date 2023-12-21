@@ -116,7 +116,7 @@ def saveModel(model:torch.nn.Module,optimizer,train_dir:str,epoch,loss):
             "optimizer_state_dict": optimizer.state_dict(),
             "loss": loss,
         },
-        train_dir
+        os.path.join(train_dir,"last.pth")
     )
     wandb.save(train_dir)
     print(f"Epoch {epoch} saved----------------")
