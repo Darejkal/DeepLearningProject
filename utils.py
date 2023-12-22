@@ -140,7 +140,7 @@ def tryRestoreStateDict(model:torch.nn.Module,optimizer:torch.optim.Optimizer,tr
             print(2)
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
             print(3)
-            epoch = checkpoint["epoch"]
+            epoch = checkpoint["epoch"]+1
             print(4)
             loss = checkpoint["loss"]
         except: 
