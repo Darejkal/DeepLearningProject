@@ -2,16 +2,16 @@ import os
 
 import torch
 from config import getConfig
+from cosasrec import CoSasrec
 from customlog import CustomLogger
-from data import JSONLEventData
+from data import MultiFeaturedJSONLEventData
 from torch.utils.data import DataLoader
 import wandb
-from sasrec import ImprovisedSasrec
 from utils import saveModel, tryRestoreStateDict
 def main():
     config=getConfig()
     logger=CustomLogger(log_file=os.path.join(config["train_dir"], 'log.txt'))
-    trainset=JSONLEventData(path=config["dataset"],
+    trainset=MultiFeaturedJSONLEventData(path=config["dataset"],
                             stats_file=config["stats_file"],
                             sub_category="train",
                             max_seqlen=config["max_len"],
@@ -29,7 +29,7 @@ def main():
                                 persistent_workers=True,
                                 num_workers=os.cpu_count() or 2,
                                 collate_fn=trainset.dynamic_collate)
-    testset=JSONLEventData(path=config["dataset"],
+    testset=MultiFeaturedJSONLEventData(path=config["dataset"],
                             stats_file=config["stats_file"],
                             sub_category="test",
                             max_seqlen=config["max_len"],
@@ -52,7 +52,7 @@ def main():
     except:
         pass
     wandb.init(project="sasrec",resume=True,dir=config["train_dir"])
-    model=ImprovisedSasrec(trainset.num_items, config["max_len"],config["hidden_size"],config["dropout_rate"],config["num_heads"],config["sampling_style"],device=config["device"])
+    model=CoSasrec(trainset.num_items, config["max_len"],config["hidden_size"],config["dropout_rate"],config["num_heads"],config["sampling_style"],device=config["device"])
     model.to(model.device)
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"], betas=(0.9, 0.98))
     if wandb.run.resumed:

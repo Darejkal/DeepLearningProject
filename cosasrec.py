@@ -1,28 +1,27 @@
 import torch
 
-from utils import calculate_ranks, mean_metric, pointwise_mrr, pointwise_recall
+from utils import bce_loss, calculate_ranks, mean_metric, multiply_head_with_embedding, pointwise_mrr, pointwise_recall
 
 
-class DynamicPositionEmbedding(torch.nn.Module):
-
+class ContextEmbedding(torch.nn.Module):
     def __init__(self, max_len, dimension,device='cpu'):
-        super(DynamicPositionEmbedding, self).__init__()
+        super(ContextEmbedding, self).__init__()
         self.device=device
         self.max_len = max_len
-        self.embedding = torch.nn.Embedding(max_len, dimension,device=device)
+        # Type
+        self.type_linear = torch.nn.Linear(max_len,max_len,device=device)
+        # Relative position
+        self.repos_linear = torch.nn.Linear(max_len,max_len,device=device)
+        # Absolute position
+        self.pos_embedding = torch.nn.Embedding(max_len, dimension,device=device)
         self.pos_indices = torch.arange(0, self.max_len, dtype=torch.int,device=device)
         self.register_buffer('pos_indices_const', self.pos_indices)
-    def forward(self, x:torch.Tensor):
+    def forward(self, x:torch.Tensor,types:torch.Tensor,times:torch.Tensor):
         seq_len = x.shape[1]
-        return self.embedding(self.pos_indices_const[-seq_len:]) + x
-def multiply_head_with_embedding(prediction_head, embeddings):
-    return prediction_head.matmul(embeddings.transpose(-1, -2))
-def bce_loss(pos_logits:torch.Tensor, neg_logits:torch.Tensor, mask:torch.Tensor, epsilon=1e-10):
-    loss = torch.log(1. + torch.exp(-pos_logits) + epsilon) + torch.log(1. + torch.exp(neg_logits) + epsilon).mean(-1, keepdim=True)
-    return (loss * mask.unsqueeze(-1)).sum() / mask.sum().clamp(0.0000005)
-class ImprovisedSasrec(torch.nn.Module):
+        return self.pos_embedding(self.pos_indices_const[-seq_len:])+(types+self.type_linear(types))+(times+self.repos_linear(times)) + x
+class CoSasrec(torch.nn.Module):
     def __init__(self, item_num,max_len,hidden_size,dropout_rate,num_layers,sampling_style,device="cpu",share_embeddings=True,topk_sampling=False,topk_sampling_k=1000):
-        super(ImprovisedSasrec, self).__init__()
+        super(CoSasrec, self).__init__()
         self.hidden_size=hidden_size
         self.item_num = item_num
         self.share_embeddings=share_embeddings
@@ -38,7 +37,7 @@ class ImprovisedSasrec(torch.nn.Module):
         self.item_emb = torch.nn.Embedding(item_num + 1, hidden_size, padding_idx=0)
         if share_embeddings:
             self.output_emb = self.item_emb
-        self.pos_emb = DynamicPositionEmbedding(max_len,hidden_size,device)
+        self.pos_emb = ContextEmbedding(max_len,hidden_size,device)
         self.input_dropout = torch.nn.Dropout(p=dropout_rate)
         self.last_layernorm = torch.nn.LayerNorm(hidden_size)
         encoder_layer=torch.nn.TransformerEncoderLayer(d_model=hidden_size,
@@ -73,19 +72,19 @@ class ImprovisedSasrec(torch.nn.Module):
         merged_masks = torch.logical_or(padding_mask_broadcast, future_masks)
         diag_masks = torch.tile(self.seq_diag_const[:seq_len, :seq_len], (batch_size, 1, 1))
         return torch.logical_and(diag_masks, merged_masks)
-    def forward(self, positives, mask): # for training   
+    def forward(self, positives, mask,types,times): # for training   
         """
         mask: padding mask of 0 and 1
         returns attention_head
         """ 
         att_mask = self.merge_attn_masks(mask)    
         x = self.item_emb(positives)
-        x = self.pos_emb(x)
+        x = self.pos_emb(x,types,times)
         prediction_head = self.encoder(self.input_dropout(x), att_mask)
         return prediction_head
     def train_step(self, batch, iteration,optimizer,logger):
         optimizer.zero_grad()
-        prediction_head = self.forward(batch["positives"],batch["mask"])
+        prediction_head = self.forward(batch["positives"],batch["mask"],batch["features"]["positives"]["types"],batch["features"]["positives"]["times"])
         pos = multiply_head_with_embedding(prediction_head.unsqueeze(-2),
                                                    self.output_emb(batch["labels"]).unsqueeze(-2)).squeeze(-1)
 
@@ -107,7 +106,7 @@ class ImprovisedSasrec(torch.nn.Module):
         return loss
 
     def validate_step(self, batch, iteration,logger):
-        prediction_head = self.forward(batch["positives"], batch["mask"])
+        prediction_head = self.forward(batch["positives"],batch["mask"],batch["features"]["positives"]["types"],batch["features"]["positives"]["times"])
         # loss:
         pos = multiply_head_with_embedding(prediction_head.unsqueeze(-2),
                                         self.output_emb(batch["labels"]).unsqueeze(-2)).squeeze(-1)

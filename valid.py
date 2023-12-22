@@ -6,7 +6,7 @@ from customlog import CustomLogger
 from data import JSONLEventData
 from torch.utils.data import DataLoader
 
-from model import ImprovisedSasrec
+from sasrec import ImprovisedSasrec
 from utils import saveModel, tryRestoreStateDict
 def main():
     config=getConfig()

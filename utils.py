@@ -6,6 +6,11 @@ import numpy as np
 from typing import List
 import wandb
 import torch
+def multiply_head_with_embedding(prediction_head, embeddings):
+    return prediction_head.matmul(embeddings.transpose(-1, -2))
+def bce_loss(pos_logits:torch.Tensor, neg_logits:torch.Tensor, mask:torch.Tensor, epsilon=1e-10):
+    loss = torch.log(1. + torch.exp(-pos_logits) + epsilon) + torch.log(1. + torch.exp(neg_logits) + epsilon).mean(-1, keepdim=True)
+    return (loss * mask.unsqueeze(-1)).sum() / mask.sum().clamp(0.0000005)
 def _uniform_negatives(num_items, shape):
     return np.random.randint(1, num_items+1, shape)
 
@@ -130,8 +135,7 @@ def tryRestoreStateDict(model:torch.nn.Module,optimizer:torch.optim.Optimizer,tr
     print("train_dir",train_dir)
     if train_dir is not None:
         try:
-            # wandb.restore()
-            checkpoint = torch.load(os.path.join(train_dir,"last.pth"))
+            checkpoint = torch.load(wandb.restore(os.path.join(train_dir,"last.pth")))
             print(1)
             model.load_state_dict(checkpoint["model_state_dict"])
             print(2)
