@@ -51,7 +51,7 @@ def main():
         os.makedirs(os.path.join(config["train_dir"],"wandb"))
     except:
         pass
-    wandb.init(project="sasrec",resume=True,dir=config["train_dir"])
+    wandb.init(project="sasrec",resume=True,dir=config["train_dir"],id="22hyimxq")
     model=CoSasrec(trainset.num_items, config["max_len"],config["hidden_size"],config["dropout_rate"],config["num_heads"],config["sampling_style"],device=config["device"])
     model.to(model.device)
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"], betas=(0.9, 0.98))
