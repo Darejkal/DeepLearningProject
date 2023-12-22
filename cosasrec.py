@@ -31,8 +31,10 @@ class DynamicPositionEmbeddingWithRotaty(torch.nn.Module):
         seq_len = x.shape[1]
         assert(seq_len%2==0)
         batch_size = x.shape[0]
-        time_intervals=torch.concat([torch.zeros((batch_size,1)),torch.diff(times)],dim=-1).reshape((batch_size,int(seq_len/2),2))
+        times=torch.tile(times,(1,self.hidden_size)).reshape(batch_size,seq_len,self.hidden_size)
+        time_intervals=torch.concat([torch.zeros((batch_size,seq_len,1)),torch.diff(times)],dim=-1).reshape((batch_size,seq_len,int(self.hidden_size/2),2))
         time_intervals=torch.mean(time_intervals,-1)
+        time_intervals=torch.tile(time_intervals,(1,1,2))
         return self.embedding(self.pos_indices_const[-seq_len:])+apply_rotary_position_embeddings(time_intervals,[x])[0] + x* np.sqrt(self.hidden_size)
 class CoSasrec(torch.nn.Module):
     def __init__(self, item_num,max_len,hidden_size,dropout_rate,num_layers,sampling_style,device="cpu",share_embeddings=True,topk_sampling=False,topk_sampling_k=1000):
