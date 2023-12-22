@@ -202,9 +202,7 @@ class MultiFeaturedJSONLEventData(Dataset):
         data_raw=json.loads(line)
         assert data_raw["events"]
         events=data_raw["events"][-(self.max_seqlen+1):]
-        time_eppedmin=events[0]["ts"]-self.epsilon
-        time_delta=events[-1]["ts"]-time_eppedmin
-        etimes=[(e["ts"]-time_eppedmin)/time_delta for e in events]
+        etimes=[e["ts"] for e in events]
         ltimes=etimes[1:]
         etimes=etimes[:-1]
         etypes=[e["type"]+1 for e in events]
@@ -278,7 +276,7 @@ class MultiFeaturedJSONLEventData(Dataset):
             'session_len': torch.tensor(batch_session_len, dtype=torch.long,device=self.device),
             'in_batch_negatives': torch.tensor(in_batch_negatives, dtype=torch.long,device=self.device), 
             'uniform_negatives': torch.tensor(batch_uniform_negatives, dtype=torch.long,device=self.device),
-            'features':{feature_key:{k: torch.tensor(v,dtype=(torch.int if k=="types" else torch.float),device=self.device) for k, v in batch_features[feature_key].items()} for feature_key in batch_features}
+            'features':{feature_key:{k: torch.tensor(v,dtype=torch.float,device=self.device) for k, v in batch_features[feature_key].items()} for feature_key in batch_features}
         }   
     
     def __len__(self):

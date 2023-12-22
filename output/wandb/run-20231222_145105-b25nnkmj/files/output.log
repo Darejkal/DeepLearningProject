@@ -1,0 +1,29 @@
+/home/rejk/Downloads/prj/dlproject-again/venv/lib/python3.11/site-packages/torch/nn/modules/transformer.py:282: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(f"enable_nested_tensor is True, but self.use_nested_tensor is False because {why_not_sparsity_fast_path}")
+[(0,0,23)]: wandb not resumed
+[(0,0,23)]: Epoch 1
+torch.Size([128, 50, 50])
+torch.Size([128, 50])
+torch.Size([128, 50])
+Traceback (most recent call last):
+  File "/home/rejk/Downloads/prj/dlproject-again/traincosasrec.py", line 74, in <module>
+    main()
+  File "/home/rejk/Downloads/prj/dlproject-again/traincosasrec.py", line 68, in main
+    loss=model.train_step(batch,step,optimizer,logger)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rejk/Downloads/prj/dlproject-again/cosasrec.py", line 90, in train_step
+    prediction_head = self.forward(batch["positives"],batch["mask"],batch["features"]["positives"]["types"],batch["features"]["positives"]["times"])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rejk/Downloads/prj/dlproject-again/cosasrec.py", line 85, in forward
+    x = self.pos_emb(x,types,times)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rejk/Downloads/prj/dlproject-again/venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rejk/Downloads/prj/dlproject-again/venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rejk/Downloads/prj/dlproject-again/cosasrec.py", line 24, in forward
+    return (self.pos_embedding(self.pos_indices_const[-seq_len:])+(types+self.type_linear(types))+(times+self.repos_linear(times))) + x
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (50) must match the size of tensor b (128) at non-singleton dimension 0

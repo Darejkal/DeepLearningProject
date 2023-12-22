@@ -1,18 +1,18 @@
 {
     "os": "Linux-6.1.0-13-amd64-x86_64-with-glibc2.36",
     "python": "3.11.2",
-    "heartbeatAt": "2023-12-21T08:21:07.543408",
-    "startedAt": "2023-12-21T08:21:06.013733",
+    "heartbeatAt": "2023-12-22T07:51:07.252575",
+    "startedAt": "2023-12-22T07:51:05.791805",
     "docker": null,
     "cuda": null,
     "args": [],
     "state": "running",
-    "program": "/home/rejk/Downloads/prj/dlproject-again/train.py",
-    "codePathLocal": "train.py",
-    "codePath": "train.py",
+    "program": "/home/rejk/Downloads/prj/dlproject-again/traincosasrec.py",
+    "codePathLocal": "traincosasrec.py",
+    "codePath": "traincosasrec.py",
     "git": {
         "remote": "git@github.com:Darejkal/DeepLearningProject.git",
-        "commit": "2c517f1c0cacedd3a02d51f6c7c0aa8e21be54fa"
+        "commit": "217b43451797910bc389401d235aa1160d6467ac"
     },
     "email": "nguyendaian1945@gmail.com",
     "root": "/home/rejk/Downloads/prj/dlproject-again",
@@ -22,28 +22,28 @@
     "cpu_count": 2,
     "cpu_count_logical": 4,
     "cpu_freq": {
-        "current": 3900.2922500000004,
+        "current": 2100.0207499999997,
         "min": 400.0,
         "max": 3900.0
     },
     "cpu_freq_per_core": [
         {
-            "current": 3899.929,
+            "current": 2426.598,
             "min": 400.0,
             "max": 3900.0
         },
         {
-            "current": 3899.918,
+            "current": 2443.767,
             "min": 400.0,
             "max": 3900.0
         },
         {
-            "current": 3900.068,
+            "current": 2103.063,
             "min": 400.0,
             "max": 3900.0
         },
         {
-            "current": 3899.973,
+            "current": 2208.616,
             "min": 400.0,
             "max": 3900.0
         }
@@ -51,7 +51,7 @@
     "disk": {
         "/": {
             "total": 182.2811393737793,
-            "used": 121.12516784667969
+            "used": 130.41611099243164
         }
     },
     "memory": {

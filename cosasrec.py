@@ -1,24 +1,39 @@
 import torch
-
+import numpy as np
 from utils import bce_loss, calculate_ranks, mean_metric, multiply_head_with_embedding, pointwise_mrr, pointwise_recall
+def apply_rotary_position_embeddings(sinusoidal_pos, layers):
+        # sin [batch_size, sequence_length, embed_size//2]
+        # cos [batch_size, sequence_length, embed_size//2]
+        sin, cos = sinusoidal_pos.chunk(2, dim=-1)
+        # sin [θ0,θ1,θ2......θd/2-1] -> sin_pos [θ0,θ0,θ1,θ1,θ2,θ2......θd/2-1,θd/2-1]
+        sin_pos = torch.repeat_interleave(sin, 2, dim=-1)
+        # cos [θ0,θ1,θ2......θd/2-1] -> cos_pos [θ0,θ0,θ1,θ1,θ2,θ2......θd/2-1,θd/2-1]
+        cos_pos = torch.repeat_interleave(cos, 2, dim=-1)
+        outlayers=[]
+        for layer in layers:
+            # rotate_half_layer [-q1,q0,-q3,q2......,-qd-1,qd-2]
+            rotate_half_layer = torch.stack([-layer[..., 1::2], layer[..., ::2]], dim=-1).reshape_as(
+                layer
+            )
+            outlayers.append(layer * cos_pos + rotate_half_layer * sin_pos)
+        return outlayers
+class DynamicPositionEmbeddingWithRotaty(torch.nn.Module):
 
-
-class ContextEmbedding(torch.nn.Module):
-    def __init__(self, max_len, dimension,device='cpu'):
-        super(ContextEmbedding, self).__init__()
+    def __init__(self, max_len, hidden_size,device='cpu'):
+        super(DynamicPositionEmbeddingWithRotaty, self).__init__()
         self.device=device
+        self.hidden_size=hidden_size
         self.max_len = max_len
-        # Type
-        self.type_linear = torch.nn.Linear(max_len,max_len,device=device)
-        # Relative position
-        self.repos_linear = torch.nn.Linear(max_len,max_len,device=device)
-        # Absolute position
-        self.pos_embedding = torch.nn.Embedding(max_len, dimension,device=device)
+        self.embedding = torch.nn.Embedding(max_len, hidden_size,device=device)
         self.pos_indices = torch.arange(0, self.max_len, dtype=torch.int,device=device)
         self.register_buffer('pos_indices_const', self.pos_indices)
-    def forward(self, x:torch.Tensor,types:torch.Tensor,times:torch.Tensor):
+    def forward(self, x:torch.Tensor,times):
         seq_len = x.shape[1]
-        return self.pos_embedding(self.pos_indices_const[-seq_len:])+(types+self.type_linear(types))+(times+self.repos_linear(times)) + x
+        assert(seq_len%2==0)
+        batch_size = x.shape[0]
+        time_intervals=torch.concat([torch.zeros((batch_size,1)),torch.diff(times)],dim=-1).reshape((batch_size,int(seq_len/2),2))
+        time_intervals=torch.mean(time_intervals,-1)
+        return self.embedding(self.pos_indices_const[-seq_len:])+apply_rotary_position_embeddings(time_intervals,[x])[0] + x* np.sqrt(self.hidden_size)
 class CoSasrec(torch.nn.Module):
     def __init__(self, item_num,max_len,hidden_size,dropout_rate,num_layers,sampling_style,device="cpu",share_embeddings=True,topk_sampling=False,topk_sampling_k=1000):
         super(CoSasrec, self).__init__()
@@ -37,7 +52,7 @@ class CoSasrec(torch.nn.Module):
         self.item_emb = torch.nn.Embedding(item_num + 1, hidden_size, padding_idx=0)
         if share_embeddings:
             self.output_emb = self.item_emb
-        self.pos_emb = ContextEmbedding(max_len,hidden_size,device)
+        self.pos_emb = DynamicPositionEmbeddingWithRotaty(max_len,hidden_size,device)
         self.input_dropout = torch.nn.Dropout(p=dropout_rate)
         self.last_layernorm = torch.nn.LayerNorm(hidden_size)
         encoder_layer=torch.nn.TransformerEncoderLayer(d_model=hidden_size,
@@ -79,7 +94,7 @@ class CoSasrec(torch.nn.Module):
         """ 
         att_mask = self.merge_attn_masks(mask)    
         x = self.item_emb(positives)
-        x = self.pos_emb(x,types,times)
+        x = self.pos_emb(x,times)
         prediction_head = self.encoder(self.input_dropout(x), att_mask)
         return prediction_head
     def train_step(self, batch, iteration,optimizer,logger):
