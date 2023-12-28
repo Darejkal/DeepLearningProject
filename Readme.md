@@ -27,4 +27,6 @@ Top-K sampling is a method mentioned in []. The idea is to use a combination of 
 
 ## SASrec
 
+https://arxiv.org/pdf/2212.04120.pdf
+
 
