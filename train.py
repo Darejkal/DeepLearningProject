@@ -61,13 +61,16 @@ def main():
         epoch_start_idx=1
         logger.log("","wandb not resumed")
     wandb.watch(model, log_freq=100)
+    model.train()
     for epoch in range(epoch_start_idx, config["num_epochs"] + 1):
         logger.log("",f"Epoch {epoch}",True)
         for step in range(config["num_batch"]):
             batch=next(iter(trainloader))
             loss=model.train_step(batch,step,optimizer,logger)
             wandb.log({"loss": loss})
+        model.eval()
         model.validate_step(next(iter(testloader)),epoch,logger)
+        model.train()
         saveModel(model=model,optimizer=optimizer,epoch=epoch,train_dir=config["train_dir"],loss=loss)
 if __name__=="__main__":
     torch.multiprocessing.set_start_method('spawn')

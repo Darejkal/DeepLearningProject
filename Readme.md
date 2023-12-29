@@ -29,4 +29,8 @@ Top-K sampling is a method mentioned in []. The idea is to use a combination of 
 
 https://arxiv.org/pdf/2212.04120.pdf
 
+## gradient policy
+
+https://homes.cs.washington.edu/~ewein//blog/2022/03/04/gumbel-max/
+
 

@@ -47,11 +47,8 @@ class ImprovisedSasrec(torch.nn.Module):
         self.final_activation = torch.nn.Identity()
             # self.pos_sigmoid = torch.nn.Sigmoid()
             # self.neg_sigmoid = torch.nn.Sigmoid()
-        for _, param in self.named_parameters():
-            try:
-                torch.nn.init.xavier_normal_(param.data)
-            except:
-                pass # just ignore those failed init layers
+        torch.nn.init.xavier_uniform_(self.item_emb.weight.data)
+        torch.nn.init.xavier_uniform_(self.pos_emb.embedding.weight.data)
     def merge_attn_masks(self, padding_mask):
         """
         padding_mask: 0 if padded and 1 if comes from the source sequence
@@ -78,9 +75,9 @@ class ImprovisedSasrec(torch.nn.Module):
         x = self.pos_emb(x)
         prediction_head = self.encoder(self.input_dropout(x), att_mask)
         return prediction_head
-    def train_step(self, batch, iteration,optimizer,logger):
-        optimizer.zero_grad()
+    def _getTrainHeadAndLoss(self,batch):
         prediction_head = self.forward(batch["positives"],batch["mask"])
+        
         pos = multiply_head_with_embedding(prediction_head.unsqueeze(-2),
                                                    self.output_emb(batch["labels"]).unsqueeze(-2)).squeeze(-1)
 
@@ -96,27 +93,17 @@ class ImprovisedSasrec(torch.nn.Module):
             neg, _ = torch.topk(neg, k=self.topk_sampling_k, dim=-1)
         pos_scores, neg_scores = self.final_activation(pos), self.final_activation(neg)
         loss=self.loss(pos_scores,neg_scores,batch["mask"])
+        return prediction_head,loss
+    def train_step(self, batch, iteration,optimizer:torch.optim.Optimizer,logger):
+        optimizer.zero_grad()
+        _,loss=self._getTrainHeadAndLoss(batch)
         logger.log("TRAIN",f"i: {iteration}, train_loss: {loss}", )
         loss.backward()
         optimizer.step()
         return loss
 
     def validate_step(self, batch, iteration,logger):
-        prediction_head = self.forward(batch["positives"], batch["mask"])
-        # loss:
-        pos = multiply_head_with_embedding(prediction_head.unsqueeze(-2),
-                                        self.output_emb(batch["labels"]).unsqueeze(-2)).squeeze(-1)
-        if self.sampling_style == "eventwise":
-            uniform_negative_logits = multiply_head_with_embedding(prediction_head.unsqueeze(-2),
-                                                                self.output_emb(batch["uniform_negatives"])).squeeze(-2)
-        else:
-            uniform_negative_logits = multiply_head_with_embedding(prediction_head, self.output_emb(batch["uniform_negatives"]))
-        in_batch_negative_logits = multiply_head_with_embedding(prediction_head, self.output_emb(batch["in_batch_negatives"]))
-        neg = torch.concat([uniform_negative_logits, in_batch_negative_logits], dim=-1)
-        if self.topk_sampling:
-            neg, _ = torch.topk(neg, k=self.topk_sampling_k, dim=-1)
-        pos_scores, neg_scores = self.final_activation(pos), self.final_activation(neg)
-        loss=self.loss(pos_scores,neg_scores,batch["mask"])
+        prediction_head,loss=self._getTrainHeadAndLoss(batch)
         # score:
         cut_offs = torch.tensor([5, 10, 20], device=self.device)
         recalls,mrrs=[],[]
