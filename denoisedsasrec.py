@@ -41,6 +41,7 @@ def _find_beta_on_C(y:torch.Tensor,init_beta:float=1,init_steps=1,delta=1e-5):
         pos_beta=init_beta
         lv=val
     while(lv-rv>delta):
+        print(lv,rv)
         mid_beta=(pos_beta+neg_beta)/2
         mv=_equation_on_C(y,mid_beta)
         if (mv>0):
