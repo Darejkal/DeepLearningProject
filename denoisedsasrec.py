@@ -1,6 +1,5 @@
 from typing import Any, Dict
 import torch
-from torch.optim.optimizer import params_t
 from sasrec import DynamicPositionEmbedding
 import torch.nn.functional as F
 from utils import *
@@ -67,39 +66,41 @@ class ReLUSquared(torch.nn.Module):
 def sample_gumbel(shape,device="cpu", eps=1e-20):
     U = torch.rand(shape,device=device)
     return -torch.log(-torch.log(U + eps) + eps)
-class SparseAttentionMaskFowardFunc(torch.autograd.Function):
-    """Both forward and backward are static methods."""
-    @staticmethod
-    def forward(ctx, input:torch.Tensor, weights:torch.Tensor):
-        """
-        In the forward pass we receive a Tensor containing the input and return
-        a Tensor containing the output. ctx is a context object that can be used
-        to stash information for backward computation. You can cache arbitrary
-        objects for use in the backward pass using the ctx.save_for_backward method.
-        """
-        ctx.save_for_backward(input, weights)
-        mask=torch.sigmoid(torch.log(weights/(1-weights))+sample_gumbel(weights.size()))
-        return mask*input
-    @staticmethod
-    def backward(ctx, grad_output):
-        """
-        In the backward pass we receive a Tensor containing the gradient of the loss
-        with respect to the output, and we need to compute the gradient of the loss
-        with respect to the inputs: here input and weights
-        """
-        input, weights = ctx.saved_tensors
-        grad_input = weights.clone()*grad_output
-        grad_weights = input.clone()*grad_output
-        return grad_input, grad_weights
+# class SparseAttentionMaskFowardFunc(torch.autograd.Function):
+#     """Both forward and backward are static methods."""
+#     @staticmethod
+#     def forward(ctx, input:torch.Tensor, weights:torch.Tensor):
+#         """
+#         In the forward pass we receive a Tensor containing the input and return
+#         a Tensor containing the output. ctx is a context object that can be used
+#         to stash information for backward computation. You can cache arbitrary
+#         objects for use in the backward pass using the ctx.save_for_backward method.
+#         """
+#         ctx.save_for_backward(input, weights)
+#         mask=torch.sigmoid((torch.log(weights/(1-weights))+sample_gumbel(weights.size()))/0.1)
+#         return mask*input
+#     @staticmethod
+#     def backward(ctx, grad_output):
+#         """
+#         In the backward pass we receive a Tensor containing the gradient of the loss
+#         with respect to the output, and we need to compute the gradient of the loss
+#         with respect to the inputs: here input and weights
+#         """
+#         input, weights = ctx.saved_tensors
+#         grad_input = weights.clone()*grad_output
+#         grad_weights = input.clone()*grad_output
+#         return grad_input, grad_weights
 class SparseAttentionMask(torch.nn.Module):
     def __init__(self,max_len:int,hidden_size:int,device="cpu"):
         super(SparseAttentionMask,self).__init__()
         self.device=device
         _weights=torch.ones(size=(max_len,hidden_size),dtype=torch.float,device=device)/2
         self.weights=torch.nn.Parameter(_weights)
-        self.fn=SparseAttentionMaskFowardFunc.apply
-    def forward(self,attention_head:torch.Tensor):
-        return self.fn(attention_head,self.weights)
+        # self.fn=SparseAttentionMaskFowardFunc.apply
+    def forward(self,attention_head:torch.Tensor,temperature:float=0.2):
+        # return self.fn(attention_head,self.weights)
+        mask=torch.sigmoid((torch.log(self.weights/(1-self.weights))+sample_gumbel(self.weights.size()))/temperature)
+        return mask*attention_head
         
 class DenoisedSasrec(torch.nn.Module):
     def __init__(self, item_num,max_len,hidden_size,dropout_rate,num_layers,sampling_style,device="cpu",share_embeddings=True,topk_sampling=False,topk_sampling_k=1000):
