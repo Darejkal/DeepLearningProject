@@ -33,6 +33,7 @@ class ImprovisedSasrec(torch.nn.Module):
         self.item_emb = torch.nn.Embedding(item_num + 1, hidden_size, padding_idx=0)
         if share_embeddings:
             self.output_emb = self.item_emb
+        else: self.output_emb=torch.nn.Embedding(item_num + 1, hidden_size, padding_idx=0)
         self.pos_emb = DynamicPositionEmbedding(max_len,hidden_size,device)
         self.input_dropout = torch.nn.Dropout(p=dropout_rate)
         self.last_layernorm = torch.nn.LayerNorm(hidden_size)
