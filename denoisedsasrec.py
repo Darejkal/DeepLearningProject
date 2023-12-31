@@ -18,9 +18,9 @@ class OffsetScale(torch.nn.Module):
         return out.unbind(dim = -2)
 def _projection_on_C(y:torch.Tensor,beta:float):
     return (y-beta).clamp(0,1)
-def _equation_on_C(y:torch.Tensor,beta:float,B=0.9):
+def _equation_on_C(y:torch.Tensor,beta:float,B=0.6):
     return (y-beta).clamp(0,1).sum()-B
-def _find_beta_on_C(y:torch.Tensor,init_beta:float=1,init_steps=1,delta=1e-20):
+def _find_beta_on_C(y:torch.Tensor,init_beta:float=1,init_steps=1,delta=1e-5):
     val=_equation_on_C(y,init_beta)
     if val>0:
         pos_beta=init_beta
