@@ -2,7 +2,7 @@ import os
 
 
 def getConfig():
-    if os.path.isdir("/kaggle/input/otto-preprocessed-jsonl"):
+    if os.path.isdir("/kaggle"):
         config={
         "dataset":"/kaggle/input/otto-preprocessed-jsonl",
         "train_dir":"/kaggle/working",
