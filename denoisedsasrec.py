@@ -20,38 +20,34 @@ def _projection_on_C(y:torch.Tensor,beta:float):
     return (y-beta).clamp(0,1)
 def _equation_on_C(y:torch.Tensor,beta:float,B=0.6):
     return (y-beta).clamp(0,1).sum()-B
-def _find_beta_on_C(y:torch.Tensor,init_beta:float=1,init_steps=1,delta=1e-5):
+def _find_beta_on_C(y:torch.Tensor,init_beta:float=1,init_steps=1,delta=1e-5,maxiter=1000):
     val=_equation_on_C(y,init_beta)
     if val>0:
         pos_beta=init_beta
-        lv=val
         while val>0:
             init_beta+=init_steps
             val=_equation_on_C(y,init_beta)
             init_steps*=2
         neg_beta=init_beta
-        rv=val
     else:
         neg_beta=init_beta
-        rv=val
         while val<0:
             init_beta-=init_steps
             val=_equation_on_C(y,init_beta)
             init_steps*=2
         pos_beta=init_beta
-        lv=val
-    while(lv-rv>delta):
-        print(lv,rv)
+    mv=pos_beta
+    i=0
+    while(i<maxiter and neg_beta-pos_beta>delta):
         mid_beta=(pos_beta+neg_beta)/2
         mv=_equation_on_C(y,mid_beta)
         if (mv>0):
-            lv=mv 
             pos_beta=mid_beta
         elif (mv<0):
-            rv=mv 
             neg_beta=mid_beta    
         else:
             return mid_beta
+        i+=1
     return pos_beta
 # class ProjectedGD(torch.optim.Optimizer):
 #     def __init__(self, params: params_t,projection_func=_projection_on_C) -> None:
