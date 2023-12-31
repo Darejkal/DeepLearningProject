@@ -76,7 +76,7 @@ class CoSasrec(torch.nn.Module):
             # self.pos_sigmoid = torch.nn.Sigmoid()
             # self.neg_sigmoid = torch.nn.Sigmoid()
         torch.nn.init.xavier_uniform_(self.item_emb.weight.data)
-        torch.nn.init.xavier_uniform_(self.pos_emb.embedding.weight.data)
+        # torch.nn.init.xavier_uniform_(self.pos_emb.embedding.weight.data)
     def merge_attn_masks(self, padding_mask):
         """
         padding_mask: 0 if padded and 1 if comes from the source sequence
