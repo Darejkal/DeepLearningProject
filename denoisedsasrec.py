@@ -100,7 +100,7 @@ class SparseAttentionMask(torch.nn.Module):
         return mask*attention_head
         
 class DenoisedSasrec(torch.nn.Module):
-    def __init__(self, item_num,max_len,hidden_size,dropout_rate,num_layers,sampling_style,device="cpu",share_embeddings=True,topk_sampling=False,topk_sampling_k=1000):
+    def __init__(self, item_num,max_len,hidden_size,dropout_rate,num_layers,sampling_style,temperature=0.6,device="cpu",share_embeddings=True,topk_sampling=False,topk_sampling_k=1000):
         # dropout rate is ignored   
         super(DenoisedSasrec, self).__init__()  
         self.device=device
@@ -112,6 +112,7 @@ class DenoisedSasrec(torch.nn.Module):
         self.topk_sampling=topk_sampling
         self.topk_sampling_k=topk_sampling_k
         self.device=device
+        self.temperature=temperature
         self.share_embeddings=share_embeddings
         self.loss=bce_loss
         self.item_emb=torch.nn.Embedding(item_num+1,hidden_size,device=device)
@@ -176,7 +177,7 @@ class DenoisedSasrec(torch.nn.Module):
     def encoder(self,x:torch.Tensor,attn_mask:torch.Tensor):
         z=self.X_to_Z(x)
         a=self.Z_to_Q(z)[0]@torch.transpose(self.Z_to_K(z)[0],-2,-1)+attn_mask
-        a=self.sparse_mask(a*attn_mask.logical_not().int())
+        a=self.sparse_mask(a*attn_mask.logical_not().int(),self.temperature)
         a=self.relu_squared(a)/(self.max_len*self.hidden_size)
         return a@self.X_to_V(x)
     def forward(self, positives, mask): # for training   
