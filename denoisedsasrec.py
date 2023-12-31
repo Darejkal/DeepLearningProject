@@ -155,7 +155,7 @@ class DenoisedSasrec(torch.nn.Module):
     def optimize_sparse_mask(self,loss_grad,lr=0.1):
         y=self.sparse_mask.weights-lr*loss_grad
         alpha=max(0,_find_beta_on_C(torch.flatten(y)))
-        self.sparse_mask.weights=torch.clamp(y-alpha,0,1)
+        self.sparse_mask.weights.data=torch.clamp(y-alpha,0,1)
     def merge_attn_masks(self, padding_mask):
         """
         padding_mask: 0 if padded and 1 if comes from the source sequence
