@@ -27,7 +27,7 @@ class DynamicPositionEmbedding(torch.nn.Module):
         # self.embedding = torch.nn.Embedding(max_len, hidden_size,device=device)
         # self.pos_indices = torch.arange(0, self.max_len, dtype=torch.int,device=device)
         # self.register_buffer('pos_indices_const', self.pos_indices)
-        self.hidden_indices=torch.pow(10000,-torch.arange(0,hidden_size,dtype=torch.float64)/hidden_size*2)
+        self.hidden_indices=torch.pow(10000,-torch.arange(0,hidden_size,dtype=torch.float,device=device)/hidden_size*2)
         self.register_buffer('hidden_indices_const', self.hidden_indices)
     def forward(self, x:torch.Tensor,times):
         seq_len = x.shape[1]
