@@ -60,7 +60,7 @@ class DenoisedSasrec(torch.nn.Module):
         if share_embeddings:
             self.output_emb = self.item_emb
         else: self.output_emb=torch.nn.Embedding(item_num + 1, hidden_size, padding_idx=0)
-        self.B=max_len*max_len
+        self.B=max_len*max_len*0.9
     def notmask_parameters(self):
         layers=[self.item_emb,self.pos_emb,self.X_to_Z,self.X_to_V,self.Z_to_Q,self.Z_to_K,self.relu_squared,self.final_activation]
         if not self.share_embeddings:
