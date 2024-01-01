@@ -1,7 +1,6 @@
 import itertools
 import torch
-from commonlayers import DynamicPositionEmbedding
-from denoisedsasrec import SparseAttentionMask, _find_beta_on_C
+from commonlayers import DynamicPositionEmbedding, SparseAttentionMask, _find_beta_on_C, _projection_on_C
 
 from utils import bce_loss, calculate_ranks, mean_metric, multiply_head_with_embedding, pointwise_mrr, pointwise_recall
 
@@ -45,10 +44,9 @@ class ImprovisedSasrec(torch.nn.Module):
         self.use_sparse_mask=use_sparse_mask
         if use_sparse_mask:
             self.sparse_mask=SparseAttentionMask(max_len,hidden_size)
+            self.B=max_len*max_len*0.9
     def notmask_parameters(self):
-        layers=[self.item_emb,self.pos_emb,self.input_dropout,self.last_layernorm,self.encoder,self.final_activation]
-        if not self.share_embeddings:
-            layers.append(self.output_emb)
+        layers=[self.item_emb,self.pos_emb,self.input_dropout,self.encoder,self.final_activation]
         if not self.share_embeddings:
             layers.append(self.output_emb)
         def getParameters(x:torch.nn.Module):
@@ -102,19 +100,18 @@ class ImprovisedSasrec(torch.nn.Module):
         pos_scores, neg_scores = self.final_activation(pos), self.final_activation(neg)
         loss=self.loss(pos_scores,neg_scores,batch["mask"])
         return prediction_head,loss
-    def optimize_sparse_mask(self,loss_grad,lr=0.1):
-        y=self.sparse_mask.weights-lr*loss_grad
-        alpha=max(0,_find_beta_on_C(torch.flatten(y)))
-        self.sparse_mask.weights.data=torch.clamp(y-alpha,0,1)
+    def optimize_sparse_mask(self,lr=0.1):
+        y=self.sparse_mask.weights-lr*self.sparse_mask.getPolicyGradient()
+        alpha=max(0,_find_beta_on_C(torch.flatten(y),B=self.B))
+        self.sparse_mask.weights.data=_projection_on_C(y,alpha)
+        # print(self.sparse_mask.weights.data)
     def train_step(self, batch, iteration,optimizer:torch.optim.Optimizer,logger):
         optimizer.zero_grad()
         _,loss=self._getTrainHeadAndLoss(batch)
         logger.log("TRAIN",f"i: {iteration}, train_loss: {loss}", )
-        loss.retain_grad()
         loss.backward()
         if self.use_sparse_mask:
-            loss_grad=loss.grad
-            self.optimize_sparse_mask(loss_grad)
+            self.optimize_sparse_mask()
         optimizer.step()
         return loss
 

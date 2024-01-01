@@ -51,23 +51,23 @@ def main():
         os.makedirs(os.path.join(config["train_dir"],"wandb"))
     except:
         pass
-    wandb.init(project="sasrec",resume=True,dir=config["train_dir"])
+    # wandb.init(project="sasrec",resume=True,dir=config["train_dir"])
     model=ImprovisedSasrec(trainset.num_items, config["max_len"],config["hidden_size"],config["dropout_rate"],config["num_heads"],config["sampling_style"],device=config["device"])
     model.to(model.device)
     optimizer = torch.optim.Adam(model.notmask_parameters(), lr=config["lr"], betas=(0.9, 0.98))
-    if wandb.run.resumed:
-        _,_,epoch_start_idx,_=tryRestoreStateDict(model,optimizer,config["train_dir"],config["state_dict_path"])
-    else:
-        epoch_start_idx=1
-        logger.log("","wandb not resumed")
-    wandb.watch(model, log_freq=100)
+    # if wandb.run.resumed:
+    #     _,_,epoch_start_idx,_=tryRestoreStateDict(model,optimizer,config["train_dir"],config["state_dict_path"])
+    # else:
+    epoch_start_idx=1
+    logger.log("","wandb not resumed")
+    # wandb.watch(model, log_freq=100)
     model.train()
     for epoch in range(epoch_start_idx, config["num_epochs"] + 1):
         logger.log("",f"Epoch {epoch}",True)
         for step in range(config["num_batch"]):
             batch=next(iter(trainloader))
             loss=model.train_step(batch,step,optimizer,logger)
-            wandb.log({"loss": loss})
+            # wandb.log({"loss": loss})
         model.eval()
         model.validate_step(next(iter(testloader)),epoch,logger)
         model.train()

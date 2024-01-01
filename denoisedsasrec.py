@@ -1,7 +1,6 @@
 from typing import Any, Dict
 import torch
-import torch.nn.functional as F
-from commonlayers import DynamicPositionEmbedding
+from commonlayers import DynamicPositionEmbedding, ReLUSquared, SparseAttentionMask, _find_beta_on_C, _projection_on_C
 from utils import *
 import itertools
 from typing import Iterator
@@ -16,88 +15,6 @@ class OffsetScale(torch.nn.Module):
     def forward(self, x):
         out = torch.einsum('... d, h d -> ... h d', x, self.gamma) + self.beta
         return out.unbind(dim = -2)
-def _projection_on_C(y:torch.Tensor,beta:float):
-    return (y-beta).clamp(0,1)
-def _equation_on_C(y:torch.Tensor,beta:float,B=0.6):
-    return (y-beta).clamp(0,1).sum()-B
-def _find_beta_on_C(y:torch.Tensor,init_beta:float=1,init_steps=1,delta=1e-5,maxiter=1000):
-    val=_equation_on_C(y,init_beta)
-    if val>0:
-        pos_beta=init_beta
-        while val>0:
-            init_beta+=init_steps
-            val=_equation_on_C(y,init_beta)
-            init_steps*=2
-        neg_beta=init_beta
-    else:
-        neg_beta=init_beta
-        while val<0:
-            init_beta-=init_steps
-            val=_equation_on_C(y,init_beta)
-            init_steps*=2
-        pos_beta=init_beta
-    mv=pos_beta
-    i=0
-    while(i<maxiter and neg_beta-pos_beta>delta):
-        mid_beta=(pos_beta+neg_beta)/2
-        mv=_equation_on_C(y,mid_beta)
-        if (mv>0):
-            pos_beta=mid_beta
-        elif (mv<0):
-            neg_beta=mid_beta    
-        else:
-            return mid_beta
-        i+=1
-    return pos_beta
-# class ProjectedGD(torch.optim.Optimizer):
-#     def __init__(self, params: params_t,projection_func=_projection_on_C) -> None:
-#         defaults={"projection_func":projection_func}
-#         super(ProjectedGD,self).__init__(params, defaults)
-#     def step():
-        
-# activation functions
-
-class ReLUSquared(torch.nn.Module):
-    def forward(self, x):
-        return F.relu(x) ** 2
-def sample_gumbel(shape,device="cpu", eps=1e-20):
-    U = torch.rand(shape,device=device)
-    return -torch.log(-torch.log(U + eps) + eps)
-# class SparseAttentionMaskFowardFunc(torch.autograd.Function):
-#     """Both forward and backward are static methods."""
-#     @staticmethod
-#     def forward(ctx, input:torch.Tensor, weights:torch.Tensor):
-#         """
-#         In the forward pass we receive a Tensor containing the input and return
-#         a Tensor containing the output. ctx is a context object that can be used
-#         to stash information for backward computation. You can cache arbitrary
-#         objects for use in the backward pass using the ctx.save_for_backward method.
-#         """
-#         ctx.save_for_backward(input, weights)
-#         mask=torch.sigmoid((torch.log(weights/(1-weights))+sample_gumbel(weights.size()))/0.1)
-#         return mask*input
-#     @staticmethod
-#     def backward(ctx, grad_output):
-#         """
-#         In the backward pass we receive a Tensor containing the gradient of the loss
-#         with respect to the output, and we need to compute the gradient of the loss
-#         with respect to the inputs: here input and weights
-#         """
-#         input, weights = ctx.saved_tensors
-#         grad_input = weights.clone()*grad_output
-#         grad_weights = input.clone()*grad_output
-#         return grad_input, grad_weights
-class SparseAttentionMask(torch.nn.Module):
-    def __init__(self,max_len:int,hidden_size:int,device="cpu"):
-        super(SparseAttentionMask,self).__init__()
-        self.device=device
-        _weights=torch.ones(size=(max_len,hidden_size),dtype=torch.float,device=device)/2
-        self.weights=torch.nn.Parameter(_weights)
-        # self.fn=SparseAttentionMaskFowardFunc.apply
-    def forward(self,attention_head:torch.Tensor,temperature:float=0.2):
-        # return self.fn(attention_head,self.weights)
-        mask=torch.sigmoid((torch.log(self.weights/(1-self.weights))+sample_gumbel(self.weights.size()))/temperature)
-        return mask*attention_head
         
 class DenoisedSasrec(torch.nn.Module):
     def __init__(self, item_num,max_len,hidden_size,dropout_rate,num_layers,sampling_style,temperature=0.6,device="cpu",share_embeddings=True,topk_sampling=False,topk_sampling_k=1000):
@@ -153,10 +70,6 @@ class DenoisedSasrec(torch.nn.Module):
         return result
     def ismask_parameters(self):
         return self.sparse_mask.parameters()
-    def optimize_sparse_mask(self,loss_grad,lr=0.1):
-        y=self.sparse_mask.weights-lr*loss_grad
-        alpha=max(0,_find_beta_on_C(torch.flatten(y)))
-        self.sparse_mask.weights.data=torch.clamp(y-alpha,0,1)
     def merge_attn_masks(self, padding_mask):
         """
         padding_mask: 0 if padded and 1 if comes from the source sequence
@@ -209,16 +122,19 @@ class DenoisedSasrec(torch.nn.Module):
         pos_scores, neg_scores = self.final_activation(pos), self.final_activation(neg)
         loss=self.loss(pos_scores,neg_scores,batch["mask"])
         return prediction_head,loss
+    def optimize_sparse_mask(self,lr=0.1):
+        y=self.sparse_mask.weights-lr*self.sparse_mask.getPolicyGradient()
+        alpha=max(0,_find_beta_on_C(torch.flatten(y),B=self.B))
+        self.sparse_mask.weights.data=_projection_on_C(y,alpha)
+        # print(self.sparse_mask.weights.data)
     def train_step(self, batch, iteration,optimizer:torch.optim.Optimizer,logger):
         optimizer.zero_grad()
         _,loss=self._getTrainHeadAndLoss(batch)
         logger.log("TRAIN",f"i: {iteration}, train_loss: {loss}", )
-        loss.retain_grad()
         loss.backward()
-        loss_grad=loss.grad
-        assert loss_grad!=None
+        if self.use_sparse_mask:
+            self.optimize_sparse_mask()
         optimizer.step()
-        self.optimize_sparse_mask(loss_grad)
         return loss
 
     def validate_step(self, batch, iteration,logger):
