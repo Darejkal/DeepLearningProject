@@ -17,10 +17,10 @@ from utils import bce_loss, calculate_ranks, mean_metric, multiply_head_with_emb
 #             )
 #             outlayers.append(layer * cos_pos + rotate_half_layer * sin_pos)
 #         return outlayers
-class DynamicPositionEmbedding(torch.nn.Module):
+class RoPositionEmbedding(torch.nn.Module):
 
     def __init__(self, max_len, hidden_size,device='cpu'):
-        super(DynamicPositionEmbedding, self).__init__()
+        super(RoPositionEmbedding, self).__init__()
         self.device=device
         self.hidden_size=hidden_size
         self.max_len = max_len
@@ -61,7 +61,7 @@ class CoSasrec(torch.nn.Module):
         self.item_emb = torch.nn.Embedding(item_num + 1, hidden_size, padding_idx=0)
         if share_embeddings:
             self.output_emb = self.item_emb
-        self.pos_emb = DynamicPositionEmbedding(max_len,hidden_size,device)
+        self.pos_emb = RoPositionEmbedding(max_len,hidden_size,device)
         self.input_dropout = torch.nn.Dropout(p=dropout_rate)
         self.last_layernorm = torch.nn.LayerNorm(hidden_size)
         encoder_layer=torch.nn.TransformerEncoderLayer(d_model=hidden_size,

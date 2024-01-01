@@ -1,7 +1,7 @@
 from typing import Any, Dict
 import torch
-from sasrec import DynamicPositionEmbedding
 import torch.nn.functional as F
+from commonlayers import DynamicPositionEmbedding
 from utils import *
 import itertools
 from typing import Iterator
