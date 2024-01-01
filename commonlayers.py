@@ -1,3 +1,4 @@
+import torch
 class DynamicPositionEmbedding(torch.nn.Module):
 
     def __init__(self, max_len, dimension,device='cpu'):
