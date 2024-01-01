@@ -90,7 +90,7 @@ class DenoisedSasrec(torch.nn.Module):
     def encoder(self,x:torch.Tensor,attn_mask:torch.Tensor):
         z=self.X_to_Z(x)
         a=self.Z_to_Q(z)[0]@torch.transpose(self.Z_to_K(z)[0],-2,-1)+attn_mask
-        a=self.sparse_mask(a*attn_mask.logical_not().int(),self.temperature)
+        a=self.sparse_mask(a*attn_mask.logical_not().int())
         a=self.relu_squared(a)/(self.max_len*self.hidden_size)
         return a@self.X_to_V(x)
     def forward(self, positives, mask): # for training   
