@@ -1,4 +1,6 @@
+import itertools
 import torch
+from denoisedsasrec import SparseAttentionMask, _find_beta_on_C
 
 from utils import bce_loss, calculate_ranks, mean_metric, multiply_head_with_embedding, pointwise_mrr, pointwise_recall
 
@@ -16,7 +18,7 @@ class DynamicPositionEmbedding(torch.nn.Module):
         seq_len = x.shape[1]
         return self.embedding(self.pos_indices_const[-seq_len:]) + x
 class ImprovisedSasrec(torch.nn.Module):
-    def __init__(self, item_num,max_len,hidden_size,dropout_rate,num_layers,sampling_style,device="cpu",share_embeddings=True,topk_sampling=False,topk_sampling_k=1000):
+    def __init__(self, item_num,max_len,hidden_size,dropout_rate,num_layers,sampling_style,device="cpu",use_sparse_mask=True,share_embeddings=True,topk_sampling=False,topk_sampling_k=1000):
         super(ImprovisedSasrec, self).__init__()
         self.hidden_size=hidden_size
         self.item_num = item_num
@@ -50,6 +52,19 @@ class ImprovisedSasrec(torch.nn.Module):
             # self.neg_sigmoid = torch.nn.Sigmoid()
         torch.nn.init.xavier_uniform_(self.item_emb.weight.data)
         torch.nn.init.xavier_uniform_(self.pos_emb.embedding.weight.data)
+        self.use_sparse_mask=use_sparse_mask
+        if use_sparse_mask:
+            self.sparse_mask=SparseAttentionMask(max_len,hidden_size)
+    def notmask_parameters(self):
+        layers=[self.item_emb,self.pos_emb,self.input_dropout,self.last_layernorm,self.encoder,self.final_activation]
+        if not self.share_embeddings:
+            layers.append(self.output_emb)
+        if not self.share_embeddings:
+            layers.append(self.output_emb)
+        def getParameters(x:torch.nn.Module):
+            return x.parameters()
+        result= itertools.chain(*list(map(getParameters,layers)))
+        return result
     def merge_attn_masks(self, padding_mask):
         """
         padding_mask: 0 if padded and 1 if comes from the source sequence
@@ -75,6 +90,8 @@ class ImprovisedSasrec(torch.nn.Module):
         x = self.item_emb(positives)
         x = self.pos_emb(x)
         prediction_head = self.encoder(self.input_dropout(x), att_mask)
+        if self.use_sparse_mask:
+            prediction_head=self.sparse_mask(prediction_head)
         return prediction_head
     def _getTrainHeadAndLoss(self,batch):
         prediction_head = self.forward(batch["positives"],batch["mask"])
@@ -95,11 +112,19 @@ class ImprovisedSasrec(torch.nn.Module):
         pos_scores, neg_scores = self.final_activation(pos), self.final_activation(neg)
         loss=self.loss(pos_scores,neg_scores,batch["mask"])
         return prediction_head,loss
+    def optimize_sparse_mask(self,loss_grad,lr=0.1):
+        y=self.sparse_mask.weights-lr*loss_grad
+        alpha=max(0,_find_beta_on_C(torch.flatten(y)))
+        self.sparse_mask.weights.data=torch.clamp(y-alpha,0,1)
     def train_step(self, batch, iteration,optimizer:torch.optim.Optimizer,logger):
         optimizer.zero_grad()
         _,loss=self._getTrainHeadAndLoss(batch)
         logger.log("TRAIN",f"i: {iteration}, train_loss: {loss}", )
+        loss.retain_grad()
         loss.backward()
+        if self.use_sparse_mask:
+            loss_grad=loss.grad
+            self.optimize_sparse_mask(loss_grad)
         optimizer.step()
         return loss
 

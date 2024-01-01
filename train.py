@@ -54,7 +54,7 @@ def main():
     wandb.init(project="sasrec",resume=True,dir=config["train_dir"])
     model=ImprovisedSasrec(trainset.num_items, config["max_len"],config["hidden_size"],config["dropout_rate"],config["num_heads"],config["sampling_style"],device=config["device"])
     model.to(model.device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"], betas=(0.9, 0.98))
+    optimizer = torch.optim.Adam(model.notmask_parameters(), lr=config["lr"], betas=(0.9, 0.98))
     if wandb.run.resumed:
         _,_,epoch_start_idx,_=tryRestoreStateDict(model,optimizer,config["train_dir"],config["state_dict_path"])
     else:
