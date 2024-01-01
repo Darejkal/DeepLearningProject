@@ -132,8 +132,7 @@ class DenoisedSasrec(torch.nn.Module):
         _,loss=self._getTrainHeadAndLoss(batch)
         logger.log("TRAIN",f"i: {iteration}, train_loss: {loss}", )
         loss.backward()
-        if self.use_sparse_mask:
-            self.optimize_sparse_mask()
+        self.optimize_sparse_mask()
         optimizer.step()
         return loss
 
