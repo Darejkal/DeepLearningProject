@@ -105,7 +105,8 @@ class SparseAttentionMask(torch.nn.Module):
         return self.weights.grad
     def forward(self,attention_head:torch.Tensor,):
         # return self.fn(attention_head,self.weights)
-        s_pre=torch.log(self.weights/(1-self.weights))
+        # avoid division by 0
+        s_pre=torch.log(self.weights/(1-self.weights+1e-20))
         mask=0
         gumbels=sample_gumbel(self.weights.size()+(2,self.sample_num),device=self.device)
         for i in range(self.sample_num):
