@@ -58,3 +58,31 @@
 [TRAIN(0,1,15)]: i: 7, train_loss: 1.3854150772094727
 [TRAIN(0,1,20)]: i: 8, train_loss: 1.3854384422302246
 [TRAIN(0,1,24)]: i: 9, train_loss: 1.385359764099121
+[(0,0,16)]: wandb not resumed
+[(0,0,16)]: Epoch 1
+[TRAIN(0,0,31)]: i: 0, train_loss: 1.3862947225570679
+[(0,0,18)]: wandb not resumed
+[(0,0,18)]: Epoch 1
+[TRAIN(0,0,34)]: i: 0, train_loss: 1.3862946033477783
+[TRAIN(0,0,40)]: i: 1, train_loss: 1.3862946033477783
+[TRAIN(0,0,47)]: i: 2, train_loss: 1.3862947225570679
+[TRAIN(0,0,53)]: i: 3, train_loss: 1.3862947225570679
+[(0,0,17)]: wandb not resumed
+[(0,0,17)]: Epoch 1
+[TRAIN(0,0,33)]: i: 0, train_loss: 1.3862946033477783
+[TRAIN(0,0,39)]: i: 1, train_loss: 1.3862947225570679
+[TRAIN(0,0,45)]: i: 2, train_loss: 1.3862947225570679
+[TRAIN(0,0,51)]: i: 3, train_loss: 1.3862946033477783
+[(0,0,17)]: wandb not resumed
+[(0,0,17)]: Epoch 1
+[TRAIN(0,0,33)]: i: 0, train_loss: 1.3862944841384888
+[TRAIN(0,0,40)]: i: 1, train_loss: 1.3862946033477783
+[TRAIN(0,0,46)]: i: 2, train_loss: 1.3862946033477783
+[TRAIN(0,0,52)]: i: 3, train_loss: 1.3862946033477783
+[TRAIN(0,0,57)]: i: 4, train_loss: 1.3862946033477783
+[(0,0,17)]: wandb not resumed
+[(0,0,17)]: Epoch 1
+[TRAIN(0,0,34)]: i: 0, train_loss: 1.3862946033477783
+[TRAIN(0,0,40)]: i: 1, train_loss: 1.3862946033477783
+[TRAIN(0,0,46)]: i: 2, train_loss: 1.3862946033477783
+[TRAIN(0,0,52)]: i: 3, train_loss: 1.3862947225570679

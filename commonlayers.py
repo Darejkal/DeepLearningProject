@@ -111,4 +111,6 @@ class SparseAttentionMask(torch.nn.Module):
         for i in range(self.sample_num):
             gumbel_delta=gumbels[...,1,i]-gumbels[...,0,i]
             mask+=torch.sigmoid((s_pre+gumbel_delta)/self.temperature)
-        return (mask/self.sample_num)*attention_head
+        prob_mask=mask/self.sample_num
+        hard_mask=(torch.bernoulli(prob_mask)-prob_mask).detach()+prob_mask
+        return hard_mask*attention_head

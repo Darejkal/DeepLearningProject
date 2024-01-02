@@ -125,6 +125,7 @@ class DenoisedSasrec(torch.nn.Module):
         return prediction_head,loss
     def optimize_sparse_mask(self,lr=0.1):
         y=self.sparse_mask.weights-lr*self.sparse_mask.getPolicyGradient()
+        # print(self.sparse_mask.getPolicyGradient())
         alpha=max(0,_find_beta_on_C(torch.flatten(y),B=self.B))
         self.sparse_mask.weights.data=_projection_on_C(y,alpha)
         # print(self.sparse_mask.weights.data)

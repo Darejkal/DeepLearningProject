@@ -1,0 +1,27 @@
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_setup.py:_flush():76] Current SDK version is 0.16.1
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_setup.py:_flush():76] Configure stats pid to 21203
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_setup.py:_flush():76] Loading settings from /home/rejk/.config/wandb/settings
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_setup.py:_flush():76] Loading settings from /home/rejk/Downloads/prj/dlproject-again/wandb/settings
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_setup.py:_flush():76] Loading settings from environment variables: {}
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program_relpath': 'train.py', 'program_abspath': '/home/rejk/Downloads/prj/dlproject-again/train.py', 'program': '/home/rejk/Downloads/prj/dlproject-again/train.py'}
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_init.py:_log_setup():524] Logging user logs to output/wandb/run-20240102_095000-4cz8h651/logs/debug.log
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_init.py:_log_setup():525] Logging internal logs to output/wandb/run-20240102_095000-4cz8h651/logs/debug-internal.log
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_init.py:init():564] calling init triggers
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_init.py:init():571] wandb.init called with sweep_config: {}
+config: {}
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_init.py:init():614] starting backend
+2024-01-02 09:50:00,523 INFO    MainThread:21203 [wandb_init.py:init():618] setting up manager
+2024-01-02 09:50:00,524 INFO    MainThread:21203 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-01-02 09:50:00,525 INFO    MainThread:21203 [wandb_init.py:init():624] backend started and connected
+2024-01-02 09:50:00,528 INFO    MainThread:21203 [wandb_init.py:init():716] updated telemetry
+2024-01-02 09:50:00,533 INFO    MainThread:21203 [wandb_init.py:init():749] communicating run to backend with 90.0 second timeout
+2024-01-02 09:50:01,650 INFO    MainThread:21203 [wandb_run.py:_on_init():2254] communicating current version
+2024-01-02 09:50:01,988 INFO    MainThread:21203 [wandb_run.py:_on_init():2263] got version response 
+2024-01-02 09:50:01,989 INFO    MainThread:21203 [wandb_init.py:init():800] starting run threads in backend
+2024-01-02 09:50:02,055 INFO    MainThread:21203 [wandb_run.py:_console_start():2233] atexit reg
+2024-01-02 09:50:02,055 INFO    MainThread:21203 [wandb_run.py:_redirect():2088] redirect: wrap_raw
+2024-01-02 09:50:02,055 INFO    MainThread:21203 [wandb_run.py:_redirect():2153] Wrapping output streams.
+2024-01-02 09:50:02,055 INFO    MainThread:21203 [wandb_run.py:_redirect():2178] Redirects installed.
+2024-01-02 09:50:02,055 INFO    MainThread:21203 [wandb_init.py:init():841] run started, returning control to user process
+2024-01-02 09:50:03,342 INFO    MainThread:21203 [wandb_watch.py:watch():51] Watching
