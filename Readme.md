@@ -1,3 +1,5 @@
+# Warning
+Do not set sparsemask to true in sasrec. It might cause error as the mask tends to 0. :(
 # Data
 OTTO Data is a collection of sessions. A session is a sequence of interaction from an user. An unit of interaction is called an event.
 
